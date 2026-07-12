@@ -1,0 +1,79 @@
+name: Build MeshDeck firmware
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: pip install platformio esptool
+
+      - name: Fetch MeshCore (pinned)
+        run: |
+          git clone https://github.com/meshcore-dev/MeshCore.git build/meshcore
+          git -C build/meshcore checkout bbb58cceb852a9190b46d5f6984e8e5140e6991e
+
+      - name: Overlay MeshDeck sources
+        run: |
+          mkdir -p build/meshcore/examples/meshdeck
+          cp -r firmware/* build/meshcore/examples/meshdeck/
+          cp platformio.local.ini build/meshcore/platformio.local.ini
+
+      - name: Compile
+        run: cd build/meshcore && pio run -e MeshDeck_TDeck_868
+
+      - name: Create single flashable image
+        run: |
+          B=build/meshcore/.pio/build/MeshDeck_TDeck_868
+          BOOT_APP0=$(find ~/.platformio/packages/framework-arduinoespressif32 -name boot_app0.bin | head -1)
+          python -m esptool --chip esp32s3 merge_bin -o meshdeck-full.bin \
+            --flash_mode dio --flash_freq 80m --flash_size 16MB \
+            0x0 $B/bootloader.bin \
+            0x8000 $B/partitions.bin \
+            0xe000 $BOOT_APP0 \
+            0x10000 $B/firmware.bin
+          cp $B/firmware.bin meshdeck.bin
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: meshdeck-firmware
+          path: |
+            meshdeck.bin
+            meshdeck-full.bin
+
+      - name: Prepare web flasher site
+        run: |
+          mkdir -p site
+          cp webflasher/index.html webflasher/manifest.json site/
+          cp meshdeck-full.bin site/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  # Publishes the web flasher at https://<user>.github.io/<repo>/
+  # One-time setup: repo Settings -> Pages -> Source: "GitHub Actions"
+  deploy-flasher:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

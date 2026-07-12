@@ -56,6 +56,7 @@ jobs:
           mkdir -p site
           cp webflasher/index.html webflasher/manifest.json site/
           cp meshdeck-full.bin site/
+          cp meshdeck.bin site/          # app image for SD-card updates (firmware.bin)
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

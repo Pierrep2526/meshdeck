@@ -957,7 +957,20 @@ static const RadioPreset PRESETS[] = {
 #define ONB_TOP   (STATUS_H + 6)
 #define ONB_VIS   ((SCREEN_H - ONB_TOP - 4) / ONB_ROW_H)
 
+void OnboardScreen::enter() {
+  _phase = 0;
+  StrHelper::strncpy(_name, ui.prefs ? ui.prefs->node_name : "", sizeof(_name));
+  _nlen = strlen(_name);
+  _sel = 0; _top = 0;
+}
+
 void OnboardScreen::choose(int i) {
+  // save the node name entered in phase 0
+  if (_nlen > 0 && ui.prefs && ui.mesh) {
+    _name[_nlen] = 0;
+    StrHelper::strncpy(ui.prefs->node_name, _name, sizeof(ui.prefs->node_name));
+    ui.mesh->savePrefs();
+  }
   if (i >= 0 && i < N_PRESETS) {
     const RadioPreset& p = PRESETS[i];
     ui.applyPreset(p.freq, p.bw, p.sf, p.cr);
@@ -973,11 +986,32 @@ void OnboardScreen::choose(int i) {
 void OnboardScreen::draw() {
   GFXcanvas16& c = ui.cv();
   c.fillScreen(C_BG);
-  ui.drawStatusBar("Select Radio Preset");
   c.setTextSize(1);
-  c.setTextColor(C_FG_FAINT);
-  c.setCursor(6, STATUS_H + 4);
-  (void)0;
+
+  // ---- phase 0: enter node name ----
+  if (_phase == 0) {
+    ui.drawStatusBar("Welcome - set your name");
+    c.setTextColor(C_FG_DIM);
+    c.setCursor(20, 56);
+    c.print("This is how other nodes see you.");
+
+    int bx = 20, by = 86, boxw = SCREEN_W - 40, bh = 26;
+    c.fillRoundRect(bx, by, boxw, bh, 5, C_BG_RAISED);
+    c.drawRoundRect(bx, by, boxw, bh, 5, C_ACCENT);
+    _name[_nlen] = 0;
+    c.setTextColor(C_FG);
+    c.setCursor(bx + 8, by + 9);
+    c.print(_name);
+    c.fillRect(bx + 8 + _nlen * 6 + 1, by + 7, 2, 12, C_ACCENT);   // cursor
+
+    c.setTextColor(C_FG_FAINT);
+    c.setCursor(20, SCREEN_H - 20);
+    c.print("type a name, enter = next");
+    return;
+  }
+
+  // ---- phase 1: radio preset list ----
+  ui.drawStatusBar("Select Radio Preset");
 
   if (_sel < _top) _top = _sel;
   if (_sel >= _top + ONB_VIS) _top = _sel - ONB_VIS + 1;
@@ -1014,21 +1048,33 @@ void OnboardScreen::draw() {
 }
 
 bool OnboardScreen::key(uint8_t k) {
+  if (_phase == 0) {
+    if (k == 0x0D) { if (_nlen > 0) { _phase = 1; _sel = 0; _top = 0; } return true; }
+    if (k == 0x08 || k == 0x7F) { if (_nlen > 0) _nlen--; return true; }
+    if (k >= 32 && k < 127 && _nlen < (int)sizeof(_name) - 2) { _name[_nlen++] = k; return true; }
+    return true;
+  }
   if (k == 0x0D) { choose(_sel); return true; }
   return false;
 }
 
 bool OnboardScreen::nav(NavEvent e) {
+  if (_phase == 0) {
+    if (e == NAV_SELECT && _nlen > 0) { _phase = 1; _sel = 0; _top = 0; }
+    return true;   // no list navigation during name entry
+  }
   switch (e) {
     case NAV_UP:     if (_sel > 0) _sel--; return true;
     case NAV_DOWN:   if (_sel < ONB_TOTAL - 1) _sel++; return true;
     case NAV_SELECT: choose(_sel); return true;
-    default: return true;   // swallow BACK - a choice is required
+    case NAV_BACK:   _phase = 0; return true;   // back to the name step
+    default: return true;
   }
 }
 
 bool OnboardScreen::touch(const TouchEvent& e) {
   if (e.kind != TouchEvent::TAP) return false;
+  if (_phase == 0) { if (_nlen > 0) { _phase = 1; _sel = 0; _top = 0; } return true; }
   int idx = _top + (e.y - ONB_TOP) / ONB_ROW_H;
   if (idx >= 0 && idx < ONB_TOTAL) {
     if (idx == _sel) choose(idx);

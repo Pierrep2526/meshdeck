@@ -278,7 +278,7 @@ void SettingsScreen::applyEdit() {
 bool SettingsScreen::key(uint8_t k) {
   if (_editing) {
     if (k == 0x0D) { applyEdit(); return true; }
-    if (k == 0x08) {
+    if (k == 0x08 || k == 0x7F) {   // backspace OR delete (T-Deck sends 0x7F)
       if (_elen > 0) _elen--;
       else _editing = false;
       return true;

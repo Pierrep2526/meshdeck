@@ -198,12 +198,16 @@ public:
 class OnboardScreen : public Screen {
 public:
   OnboardScreen(UITask& u) : Screen(u) {}
+  void enter() override;
   void draw() override;
   bool key(uint8_t c) override;
   bool nav(NavEvent e) override;
   bool touch(const TouchEvent& e) override;
 private:
   void choose(int i);
+  int _phase = 0;            // 0 = enter node name, 1 = pick radio preset
+  char _name[32];
+  int _nlen = 0;
   int _sel = 0, _top = 0;
 };
 

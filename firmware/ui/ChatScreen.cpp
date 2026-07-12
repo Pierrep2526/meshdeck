@@ -267,7 +267,7 @@ bool ChatScreen::key(uint8_t k) {
     sendCompose();
     return true;
   }
-  if (k == 0x08) {
+  if (k == 0x08 || k == 0x7F) {   // backspace OR delete (T-Deck sends 0x7F)
     if (_clen > 0) { _clen--; _compose[_clen] = 0; return true; }
     return false;   // empty compose -> back
   }

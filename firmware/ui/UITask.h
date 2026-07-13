@@ -17,7 +17,7 @@ class UITask;
 enum ScreenId : uint8_t {
   SCR_HOME = 0, SCR_CHAT, SCR_CONTACTS, SCR_MAP, SCR_LASTHEARD, SCR_REPEATERS,
   SCR_TRACE, SCR_NOISE, SCR_TERMINAL, SCR_SETTINGS, SCR_QR,
-  SCR_ONBOARD, SCR_DIAG, SCR_SOS, SCR_COUNT
+  SCR_ONBOARD, SCR_DIAG, SCR_SOS, SCR_MAPDL, SCR_COUNT
 };
 
 class Screen {
@@ -154,6 +154,7 @@ public:
   char* wifiPass() { return _wifi_pass; }
   bool  gpsFix() const { return sensors && (sensors->node_lat != 0 || sensors->node_lon != 0); }
   const char* downloadMapPack(const char* name);   // fetch a .mdm over WiFi to SD; nullptr = ok
+  const char* downloadMapIndex(char* buf, size_t sz, int& outlen);  // fetch maps/index.txt over WiFi
   const char* prepareSD();                          // create /meshdeck-maps on the SD card
 
   // chat actions

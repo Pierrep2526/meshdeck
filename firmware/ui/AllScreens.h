@@ -230,3 +230,29 @@ public:
   bool nav(NavEvent e) override;
   bool touch(const TouchEvent& e) override;
 };
+
+// ---------------------------------------------------------------- Map download (WiFi)
+
+#define MAPDL_MAX 128
+class MapDownloadScreen : public Screen {
+public:
+  MapDownloadScreen(UITask& u) : Screen(u) {}
+  void enter() override;
+  void draw() override;
+  bool key(uint8_t c) override;
+  bool nav(NavEvent e) override;
+  bool touch(const TouchEvent& e) override;
+private:
+  void loadIndex();
+  void rebuildFilter();
+  void downloadSel();
+  char _codes[MAPDL_MAX][8];
+  char _names[MAPDL_MAX][28];
+  int  _n = 0;               // total regions loaded
+  int  _filt[MAPDL_MAX];     // indices matching the filter
+  int  _nf = 0;              // number matching
+  int  _sel = 0, _top = 0;
+  char _filter[20];          // type-to-search text
+  int  _flen = 0;
+  const char* _status = nullptr;   // e.g. "Connect WiFi first"
+};

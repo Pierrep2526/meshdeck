@@ -14,7 +14,7 @@ static const char* LABELS[SI_COUNT] = {
   "Node name", "Frequency (MHz)", "Spreading factor", "Bandwidth (kHz)", "Coding rate", "Path mode (bytes/hop)", "TX power (dBm)", "Radio preset setup",
   "Brightness", "Screen timeout (s)", "Time zone (UTC+)", "Always-on clock", "Sounds", "Volume", "Flip display", "Touch mapping", "Trackball speed", "Auto-advert (min)", "SOS beacon",
   "GPS module", "WiFi network (SSID)", "WiFi password", "WiFi connect", "Share location in advert", "Manual latitude", "Manual longitude", "Auto-add contacts",
-  "Send advert (0-hop)", "Send advert (flood)", "Clear message history", "Download UK map (WiFi)", "Prepare SD (maps folder)", "Reload SD map packs", "Update firmware from SD", "About"
+  "Send advert (0-hop)", "Send advert (flood)", "Clear message history", "Download maps (WiFi)", "Prepare SD (maps folder)", "Reload SD map packs", "Update firmware from SD", "About"
 };
 
 #define S_ROW_H 18
@@ -239,11 +239,9 @@ void SettingsScreen::select() {
     case SI_WIFI:
       if (ui.wifiState() == 0) ui.wifiConnect(); else ui.wifiOff();
       break;
-    case SI_DLMAP: {
-      const char* err = ui.downloadMapPack("uk");
-      ui.toast(err ? err : "UK map downloaded", err ? C_RED : C_GREEN);
+    case SI_DLMAP:
+      ui.go(SCR_MAPDL);      // opens the region picker (fetches list over WiFi)
       break;
-    }
     case SI_SDPREP: {
       const char* err = ui.prepareSD();
       ui.toast(err ? err : "SD ready (/meshdeck-maps)", err ? C_RED : C_GREEN);

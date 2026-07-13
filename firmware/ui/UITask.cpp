@@ -248,6 +248,7 @@ void UITask::begin(MyMesh* m, SensorManager* s, NodePrefs* p) {
   _screens[SCR_ONBOARD]   = new OnboardScreen(*this);
   _screens[SCR_DIAG]      = new DiagScreen(*this);
   _screens[SCR_SOS]       = new SOSScreen(*this);
+  _screens[SCR_MAPDL]     = new MapDownloadScreen(*this);
 
   termLog(C_TERM_SYS, "MeshDeck v%s on MeshCore %s", MESHDECK_VERSION, FIRMWARE_VERSION);
   // NOTE: format the floats separately - StrHelper::ftoa returns a shared static
@@ -1038,6 +1039,27 @@ const char* UITask::downloadMapPack(const char* name) {
   f.close(); http.end(); hw.sdEnd();
   if (total <= 0) return "Empty download";
   reloadSDMaps();
+  return nullptr;
+}
+
+// Fetch the list of available map packs (maps/index.txt) over WiFi.
+const char* UITask::downloadMapIndex(char* buf, size_t sz, int& outlen) {
+  outlen = 0;
+  if (wifiState() != 2) return "Connect WiFi first";
+  WiFiClientSecure client; client.setInsecure();
+  HTTPClient http;
+  const char* url = "https://meshdeck-os.github.io/meshdeck/maps/index.txt";
+  if (!http.begin(client, url)) return "URL error";
+  int code = http.GET();
+  if (code != 200) { http.end(); return "HTTP error"; }
+  String body = http.getString();
+  http.end();
+  int n = body.length();
+  if (n <= 0) return "Empty index";
+  if (n > (int)sz - 1) n = sz - 1;
+  memcpy(buf, body.c_str(), n);
+  buf[n] = 0;
+  outlen = n;
   return nullptr;
 }
 

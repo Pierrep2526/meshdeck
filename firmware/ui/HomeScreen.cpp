@@ -3,7 +3,7 @@
 #include <RTClib.h>
 
 struct AppDef { const char* label; ScreenId scr; uint16_t color; char glyph; bool disc; };
-#define N_APPS 12
+#define N_APPS 13
 static const AppDef APPS[N_APPS] = {
   { "Chat",      SCR_CHAT,      C_ACCENT, 'C', false },
   { "Contacts",  SCR_CONTACTS,  C_GREEN,  '@', false },
@@ -17,14 +17,15 @@ static const AppDef APPS[N_APPS] = {
   { "Terminal",  SCR_TERMINAL,  C_FG,     '>', false },
   { "SOS",       SCR_SOS,       C_RED,    '!', false },
   { "Settings",  SCR_SETTINGS,  C_FG_DIM, 'S', false },
+  { "WiFi",      SCR_WIFI,      C_ACCENT, 'W', false },
 };
 
-// grid layout: 4 rows x 3 cols
+// grid layout: 5 rows x 3 cols
 #define GRID_X0   14
 #define GRID_Y0   94
-#define GRID_ROWS 4
+#define GRID_ROWS 5
 #define CELL_W    100
-#define CELL_H    35
+#define CELL_H    29
 
 // open an app tile: Discover sends a flood advert first, everything else just navigates
 static void openApp(UITask& ui, int i) {

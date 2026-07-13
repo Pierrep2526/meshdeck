@@ -256,3 +256,22 @@ private:
   int  _flen = 0;
   const char* _status = nullptr;   // e.g. "Connect WiFi first"
 };
+
+// ---------------------------------------------------------------- WiFi (join a network)
+
+class WifiScreen : public Screen {
+public:
+  WifiScreen(UITask& u) : Screen(u) {}
+  void enter() override;
+  void draw() override;
+  bool key(uint8_t c) override;
+  bool nav(NavEvent e) override;
+  bool touch(const TouchEvent& e) override;
+private:
+  void select();
+  void applyEdit();
+  int  _sel = 0;             // 0 = SSID, 1 = password, 2 = connect/disconnect
+  bool _editing = false;
+  char _edit[68];
+  int  _elen = 0;
+};

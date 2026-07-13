@@ -57,10 +57,11 @@ jobs:
           cp webflasher/index.html webflasher/manifest.json site/
           cp meshdeck-full.bin site/
           cp meshdeck.bin site/          # app image for SD-card updates (firmware.bin)
-          # Downloadable SD map packs (fetched over WiFi by the firmware)
+          # Downloadable SD map packs + region index (fetched over WiFi by the firmware)
           if ls sdcard/meshdeck-maps/*.mdm >/dev/null 2>&1; then
             mkdir -p site/maps
             cp sdcard/meshdeck-maps/*.mdm site/maps/
+            [ -f sdcard/meshdeck-maps/index.txt ] && cp sdcard/meshdeck-maps/index.txt site/maps/
           fi
 
       - name: Upload Pages artifact

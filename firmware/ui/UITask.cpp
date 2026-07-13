@@ -1143,7 +1143,18 @@ void DiagScreen::draw() {
   c.setTextColor(C_ACCENT); c.setCursor(8, y); c.print("Mesh"); y += 15;
   c.setTextColor(C_FG_DIM); c.setCursor(12, y); c.print("Contacts / heard");
   snprintf(v, sizeof(v), "%d / %d", (int)(ui.mesh ? ui.mesh->getNumContacts() : 0), (int)ui.heardCount());
-  c.setTextColor(C_FG); c.setCursor(150, y); c.print(v); y += 16;
+  c.setTextColor(C_FG); c.setCursor(150, y); c.print(v); y += 18;
+
+  // system performance (#3)
+  c.setTextColor(C_ACCENT); c.setCursor(8, y); c.print("System"); y += 15;
+  c.setTextColor(C_FG_DIM); c.setCursor(12, y); c.print("RAM / PSRAM free");
+  snprintf(v, sizeof(v), "%u / %u KB", (unsigned)(ESP.getFreeHeap() / 1024),
+           (unsigned)(heap_caps_get_free_size(MALLOC_CAP_SPIRAM) / 1024));
+  c.setTextColor(C_FG); c.setCursor(150, y); c.print(v); y += 14;
+  c.setTextColor(C_FG_DIM); c.setCursor(12, y); c.print("Uptime");
+  uint32_t up = millis() / 1000;
+  snprintf(v, sizeof(v), "%uh %02um %02us", up / 3600, (up % 3600) / 60, up % 60);
+  c.setTextColor(C_FG); c.setCursor(150, y); c.print(v);
 
   c.setTextColor(C_FG_FAINT); c.setCursor(6, SCREEN_H - 10);
   c.print("press A to send a flood advert");

@@ -132,10 +132,15 @@ void ChatScreen::draw() {
         c.setTextColor(nameColor(m->sender));
         c.setCursor(bx + 7, ty2);
         c.print(m->sender);
-        // signal hint next to name
-        char sig[16];
-        snprintf(sig, sizeof(sig), "%s", m->hops == 0xFF ? "direct" : "");
-        if (m->hops != 0xFF) snprintf(sig, sizeof(sig), "%dhop", m->hops);
+        // signal hint next to name: hops + SNR (when measured)
+        char sig[24];
+        if (m->hops == 0xFF) strcpy(sig, "direct");
+        else snprintf(sig, sizeof(sig), "%dhop", m->hops);
+        if (m->snr4 != 0) {
+          char s2[10];
+          snprintf(s2, sizeof(s2), " %ddB", m->snr4 / 4);
+          strncat(sig, s2, sizeof(sig) - strlen(sig) - 1);
+        }
         c.setTextColor(C_FG_FAINT);
         c.setCursor(bx + bub_w - strlen(sig) * 6 - 6, ty2);
         c.print(sig);
@@ -317,6 +322,13 @@ bool ChatScreen::touch(const TouchEvent& e) {
       if (e.y >= _hits[i].y0 && e.y <= _hits[i].y1) {
         DeckMsg* m = ui.store.msgAt(t, _hits[i].msg_idx);
         if (!m) return true;
+        // tap a failed (red x) outgoing message to resend it
+        if ((m->flags & MF_OUT) && (m->flags & MF_FAILED)) {
+          if (t->kind == TK_CONTACT) ui.sendDM(t->pub_prefix, m->text);
+          else ui.sendChannel(t->channel_idx, m->text);
+          ui.toast("Resending message", C_ACCENT);
+          return true;
+        }
         const char* url = strstr(m->text, "http");
         if (url) {
           char u[128];

@@ -106,7 +106,20 @@ void HomeScreen::draw() {
     c.print(g);
   }
 
-  // app grid 4x3
+  // WiFi status (green = connected, yellow = connecting, faint = off)
+  {
+    int ws = ui.wifiState();
+    char w[28];
+    uint16_t wcol;
+    if (ws == 2)      { snprintf(w, sizeof(w), "WiFi %s", ui.wifiSsid()); wcol = C_GREEN; }
+    else if (ws == 1) { strcpy(w, "WiFi connecting"); wcol = C_YELLOW; }
+    else              { strcpy(w, "WiFi off"); wcol = C_FG_FAINT; }
+    c.setTextColor(wcol);
+    c.setCursor(8, 48);
+    c.print(w);
+  }
+
+  // app grid 5x3
   for (int i = 0; i < N_APPS; i++) {
     int gx = GRID_X0 + (i % 3) * CELL_W;
     int gy = GRID_Y0 + (i / 3) * CELL_H;

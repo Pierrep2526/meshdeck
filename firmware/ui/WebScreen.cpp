@@ -51,7 +51,7 @@ async function frame(){
    d[i*4]=((v>>11)&31)*255/31|0;d[i*4+1]=((v>>5)&63)*255/63|0;d[i*4+2]=(v&31)*255/31|0;d[i*4+3]=255;}
   g.putImageData(img,0,0);
  }catch(e){}
- setTimeout(frame,200);
+ setTimeout(frame,400);
 }
 frame();
 c.addEventListener('click',e=>{const r=c.getBoundingClientRect();
@@ -86,7 +86,20 @@ void UITask::startRemoteScreen() {
     size_t n = (size_t)c.width() * (size_t)c.height() * 2;
     _web->setContentLength(n);
     _web->send(200, "application/octet-stream", "");
-    _web->client().write((const uint8_t*)c.getBuffer(), n);
+    // Stream the framebuffer in small chunks, yielding between each so the
+    // LoRa mesh loop and the RTOS watchdog keep running (a single 150 KB
+    // blocking write starves the radio and resets the device).
+    WiFiClient& client = _web->client();
+    const uint8_t* buf = (const uint8_t*)c.getBuffer();
+    size_t sent = 0;
+    const size_t CHUNK = 1460;                 // ~one TCP segment
+    while (sent < n && client.connected()) {
+      size_t want = (n - sent) < CHUNK ? (n - sent) : CHUNK;
+      size_t wrote = client.write(buf + sent, want);
+      if (wrote == 0) { delay(1); }             // TCP buffer full: let it drain
+      else sent += wrote;
+      yield();                                  // feed the watchdog, run other tasks
+    }
   });
 
   _web->on("/tap", [this]() {

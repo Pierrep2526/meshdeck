@@ -23,10 +23,10 @@ static const AppDef APPS[N_APPS] = {
 
 // grid layout: 5 rows x 3 cols
 #define GRID_X0   14
-#define GRID_Y0   94
+#define GRID_Y0   98
 #define GRID_ROWS 5
 #define CELL_W    100
-#define CELL_H    29
+#define CELL_H    28
 
 // open an app tile: Discover sends a flood advert first, everything else just navigates
 static void openApp(UITask& ui, int i) {
@@ -86,7 +86,8 @@ void HomeScreen::draw() {
   c.setCursor(8, 26);
   c.print("mesh");
 
-  // GPS status (green = fix with coords, yellow = searching, faint = off)
+  // combined GPS + WiFi status line, placed BELOW the clock/date/name so it
+  // never overlaps the big clock digits
   {
     char g[36];
     uint16_t gcol;
@@ -95,29 +96,27 @@ void HomeScreen::draw() {
         snprintf(g, sizeof(g), "GPS %.4f,%.4f", ui.sensors->node_lat, ui.sensors->node_lon);
         gcol = C_GREEN;
       } else {
-        strcpy(g, "GPS searching...");
+        strcpy(g, "GPS searching");
         gcol = C_YELLOW;
       }
     } else {
       strcpy(g, "GPS off");
       gcol = C_FG_FAINT;
     }
-    c.setTextColor(gcol);
-    c.setCursor(8, 38);
-    c.print(g);
-  }
-
-  // WiFi status (green = connected, yellow = connecting, faint = off)
-  {
     int ws = ui.wifiState();
-    char w[28];
+    char w[24];
     uint16_t wcol;
     if (ws == 2)      { snprintf(w, sizeof(w), "WiFi %s", ui.wifiSsid()); wcol = C_GREEN; }
-    else if (ws == 1) { strcpy(w, "WiFi connecting"); wcol = C_YELLOW; }
+    else if (ws == 1) { strcpy(w, "WiFi..."); wcol = C_YELLOW; }
     else              { strcpy(w, "WiFi off"); wcol = C_FG_FAINT; }
-    c.setTextColor(wcol);
-    c.setCursor(8, 48);
-    c.print(w);
+
+    int total_w = (strlen(g) + 3 + strlen(w)) * 6;   // GPS + "   " + WiFi
+    int x = SCREEN_W / 2 - total_w / 2;
+    if (x < 6) x = 6;
+    c.setCursor(x, 88);
+    c.setTextColor(gcol);   c.print(g);
+    c.setTextColor(C_FG_FAINT); c.print("   ");
+    c.setTextColor(wcol);   c.print(w);
   }
 
   // app grid 5x3

@@ -174,6 +174,7 @@ protected:
 
 public:
   void savePrefs() { _store->savePrefs(_prefs, sensors.node_lat, sensors.node_lon); }
+  void saveChannels() { _store->saveChannels(this); }   // persist group channels (used by the Channels UI)
 
 #if ENV_INCLUDE_GPS == 1
   void applyGpsPrefs() {
@@ -209,7 +210,6 @@ private:
   bool isValidClientRepeatFreq(uint32_t f) const;
 
   // helpers, short-cuts
-  void saveChannels() { _store->saveChannels(this); }
   void saveContacts();
 
   DataStore* _store;

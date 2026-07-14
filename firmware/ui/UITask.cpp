@@ -10,6 +10,7 @@
 #include <math.h>
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
+#include <WebServer.h>
 #include <time.h>
 #include <HTTPClient.h>
 #include <SD.h>
@@ -786,6 +787,7 @@ void UITask::loop() {
   if (!_booted) return;
 
   store.loop();
+  if (_web) _web->handleClient();          // remote screen web server
 
   // noise floor sampling (4x/sec)
   if (millis() - _last_noise_sample > 250) {
@@ -832,6 +834,7 @@ void UITask::loop() {
   } else {
     _ntp_started = false;   // re-sync on the next WiFi connection
     _ntp_done = false;
+    if (_remote_on) stopRemoteScreen();   // WiFi dropped: shut the web server down
   }
 
   // USB serial -> terminal commands
@@ -916,9 +919,14 @@ void UITask::dispatchInput() {
     k = 0;
   }
   if (k && _sym_shift) k = symMap(k);
+  if (!k && _inj_key) { k = _inj_key; _inj_key = 0; }        // web remote-screen key
   NavEvent nv = hw.readNav();
+  if (nv == NAV_NONE && _inj_nav) { nv = (NavEvent)_inj_nav; _inj_nav = 0; }
   TouchEvent te;
   bool has_touch = hw.readTouch(te);
+  if (!has_touch && _inj_tap) {
+    te.kind = TouchEvent::TAP; te.x = _inj_x; te.y = _inj_y; has_touch = true; _inj_tap = false;
+  }
 
   if (!hw.isDisplayOn()) {
     if (k || nv != NAV_NONE || has_touch) {

@@ -13,6 +13,7 @@
 
 class MyMesh;
 class UITask;
+class WebServer;   // ESP32 web server (remote screen), included only in WebScreen.cpp
 
 enum ScreenId : uint8_t {
   SCR_HOME = 0, SCR_CHAT, SCR_CONTACTS, SCR_MAP, SCR_LASTHEARD, SCR_REPEATERS,
@@ -210,6 +211,17 @@ public:
   void toggleSym() { _sym_shift = !_sym_shift; _dirty = true; }
   bool symShift() const { return _sym_shift; }
 
+  // remote screen: mirror the display to a browser over WiFi and accept input
+  void startRemoteScreen();
+  void stopRemoteScreen();
+  bool remoteScreenOn() const { return _remote_on; }
+  const char* remoteScreenURL();
+  // input injected by the web client (consumed in dispatchInput)
+  volatile uint8_t _inj_key = 0;
+  volatile int     _inj_nav = 0;
+  volatile bool    _inj_tap = false;
+  volatile int16_t _inj_x = 0, _inj_y = 0;
+
   ContactInfo* contactByPrefix(const uint8_t* prefix6);
 
 private:
@@ -271,6 +283,11 @@ private:
   bool _ntp_started = false;
   bool _ntp_done = false;
   uint32_t _ntp_last_try = 0;
+
+  // remote screen web server
+  WebServer* _web = nullptr;
+  bool _remote_on = false;
+  char _remote_url[40] = "";
 
   // serial terminal input
   char _ser_line[96];

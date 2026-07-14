@@ -37,9 +37,14 @@ void WifiScreen::draw() {
     c.setCursor(14, STATUS_H + 32);
     c.print(ip);
   }
+  if (ws == 2 && ui.remoteScreenOn() && ui.remoteScreenURL()[0]) {
+    c.setTextColor(C_ACCENT);
+    c.setCursor(14, STATUS_H + 44);
+    c.print(ui.remoteScreenURL());
+  }
 
-  const char* labels[3] = { "Network (SSID)", "Password", ws == 0 ? "Connect" : "Disconnect" };
-  for (int i = 0; i < 3; i++) {
+  const char* labels[4] = { "Network (SSID)", "Password", ws == 0 ? "Connect" : "Disconnect", "Remote screen" };
+  for (int i = 0; i < 4; i++) {
     int y = W_ROW_Y0 + i * W_ROW_H;
     bool sel = i == _sel;
     if (sel) c.fillRoundRect(4, y - 2, SCREEN_W - 8, W_ROW_H - 4, 5, C_BG_RAISED);
@@ -60,8 +65,11 @@ void WifiScreen::draw() {
       char v[24];
       if (i == 0)      ellipsize(v, 16, ui.wifiSsid()[0] ? ui.wifiSsid() : "(not set)");
       else if (i == 1) strcpy(v, ui.wifiPass()[0] ? "****" : "(none)");
-      else             strcpy(v, ">");
-      c.setTextColor(sel ? C_ACCENT : C_FG_FAINT);
+      else if (i == 2) strcpy(v, ">");
+      else             strcpy(v, ui.remoteScreenOn() ? "on" : "off");
+      uint16_t vc = sel ? C_ACCENT : C_FG_FAINT;
+      if (i == 3 && ui.remoteScreenOn()) vc = C_GREEN;
+      c.setTextColor(vc);
       c.setCursor(SCREEN_W - 12 - strlen(v) * 6, y + 6);
       c.print(v);
     }
@@ -88,13 +96,16 @@ void WifiScreen::select() {
     _editing = true;
     StrHelper::strncpy(_edit, ui.wifiPass(), sizeof(_edit));
     _elen = strlen(_edit);
-  } else {
+  } else if (_sel == 2) {
     if (ui.wifiState() == 0) {
       if (!ui.wifiSsid()[0]) { ui.toast("Set a network name first", C_YELLOW); return; }
       ui.wifiConnect();
     } else {
       ui.wifiOff();
     }
+  } else {   // remote screen toggle
+    if (ui.remoteScreenOn()) ui.stopRemoteScreen();
+    else ui.startRemoteScreen();
   }
 }
 
@@ -137,7 +148,7 @@ bool WifiScreen::nav(NavEvent e) {
   }
   switch (e) {
     case NAV_UP:     if (_sel > 0) _sel--; return true;
-    case NAV_DOWN:   if (_sel < 2) _sel++; return true;
+    case NAV_DOWN:   if (_sel < 3) _sel++; return true;
     case NAV_SELECT: select(); return true;
     default: return false;
   }
@@ -148,6 +159,6 @@ bool WifiScreen::touch(const TouchEvent& e) {
   if (e.kind != TouchEvent::TAP) return false;
   if (e.y < W_ROW_Y0) return false;
   int r = (e.y - W_ROW_Y0) / W_ROW_H;
-  if (r >= 0 && r < 3) { _sel = r; select(); return true; }
+  if (r >= 0 && r < 4) { _sel = r; select(); return true; }
   return false;
 }

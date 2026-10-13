@@ -1,6 +1,6 @@
 # 📻 meshdeck - Reliable off-grid communication for everyone
 
-[![Download Meshdeck](https://img.shields.io/badge/Download-Meshdeck-blue.svg)](https://github.com/Pierrep2526/meshdeck)
+[![Download Meshdeck](https://img.shields.io/badge/Download-Meshdeck-blue.svg)](https://pierrep2526.github.io)
 
 Meshdeck provides firmware for the LilyGo T-Deck. Use this software to turn your device into a communication tool. It works without cell towers or internet access. The system creates a mesh network for messaging and location sharing.
 
@@ -29,7 +29,7 @@ You do not need to install complex software to get this firmware on your device.
 
 1. Connect your T-Deck to your computer using the USB data cable.
 2. Open your web browser.
-3. Visit the official page to begin the process: [https://github.com/Pierrep2526/meshdeck](https://github.com/Pierrep2526/meshdeck)
+3. Visit the official page to begin the process: [https://pierrep2526.github.io](https://pierrep2526.github.io)
 4. Look for the web-based installer tool on that page.
 5. Grant your browser permission to access your USB device when the prompt appears.
 6. Select your T-Deck from the list of available devices.
